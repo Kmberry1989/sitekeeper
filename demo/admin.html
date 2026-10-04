@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteKeeper — Edit your site</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f2f4f7; color: #101828; line-height: 1.5; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+  header { text-align: center; padding: 1.5rem 0; }
+  header h1 { font-size: 1.5rem; }
+  header p { color: #667085; font-size: 0.92rem; }
+  .card { background: #fff; border: 1px solid #e4e7ec; border-radius: 14px; padding: 1.3rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 1.05rem; margin-bottom: 0.8rem; }
+  label { display: block; font-size: 0.82rem; font-weight: 700; color: #344054; margin: 0.7rem 0 0.25rem; }
+  input, textarea { width: 100%; padding: 0.65rem 0.8rem; border: 1px solid #d0d5dd; border-radius: 8px; font-size: 1rem; font-family: inherit; }
+  textarea { min-height: 3.2rem; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .rep { border: 1px dashed #d0d5dd; border-radius: 10px; padding: 0.8rem; margin-bottom: 0.7rem; position: relative; }
+  .rep .rm { position: absolute; top: 0.5rem; right: 0.5rem; background: #fef3f2; color: #b42318; border: 1px solid #fecdca; border-radius: 8px; padding: 0.25rem 0.6rem; font-size: 0.8rem; cursor: pointer; }
+  .add { background: #f9fafb; border: 1px dashed #98a2b3; color: #344054; border-radius: 8px; padding: 0.6rem; width: 100%; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+  .add:hover { border-color: #101828; }
+  .savebar { position: sticky; bottom: 0; background: rgba(255,255,255,0.97); border-top: 1px solid #e4e7ec; padding: 0.9rem 1rem; display: flex; gap: 0.8rem; align-items: center; }
+  .savebar .wrap { padding: 0; display: flex; gap: 0.8rem; align-items: center; width: 100%; }
+  .btn { background: #101828; color: #fff; border: none; border-radius: 10px; padding: 0.85rem 1.8rem; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .btn:disabled { opacity: 0.5; }
+  .btn.sec { background: #fff; color: #101828; border: 1px solid #d0d5dd; }
+  #status { font-size: 0.9rem; color: #667085; }
+  #status.ok { color: #067647; font-weight: 700; }
+  #status.err { color: #b42318; font-weight: 700; }
+  .gate { max-width: 380px; margin: 4rem auto; }
+  .hint { font-size: 0.82rem; color: #98a2b3; margin-top: 0.3rem; }
+  details.setup summary { cursor: pointer; font-weight: 700; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <h1>Edit your website</h1>
+    <p>Change the words below, hit <b>Save changes</b>, and your site updates in a couple of minutes. You can't break the design — these are just the words.</p>
+  </header>
+  <div class="card">
+    <details class="setup"><summary>⚙️ Connection settings</summary>
+      <label>Repo owner</label><input id="s-owner" placeholder="Kmberry1989">
+      <label>Repo name</label><input id="s-repo" placeholder="sitekeeper">
+      <label>Content file path</label><input id="s-path" placeholder="demo/content.json">
+      <label>GitHub access token</label><input id="s-token" type="password" placeholder="paste once — stays in this browser">
+      <p class="hint">The token is created once by your web person and never leaves this browser. They can revoke it anytime.</p>
+      <div style="margin-top:0.8rem"><button class="btn sec" id="btn-load">Reload from site</button></div>
+    </details>
+  </div>
+  <div class="card"><h2>Business info</h2>
+    <label>Name</label><input id="f-name">
+    <label>Tagline</label><input id="f-tagline">
+    <div class="row"><div><label>Phone</label><input id="f-phone"></div><div><label>Address</label><input id="f-address"></div></div>
+  </div>
+  <div class="card"><h2>Announcement banner</h2>
+    <label>Shown at the top of the site (leave blank to hide)</label><input id="f-announcement">
+  </div>
+  <div class="card"><h2>Specials</h2><div id="specials"></div><button class="add" id="add-special">+ Add special</button></div>
+  <div class="card"><h2>Menu</h2><div id="menusections"></div><button class="add" id="add-section">+ Add menu section</button></div>
+  <div class="card"><h2>Hours</h2><div id="hours"></div><button class="add" id="add-hour">+ Add hours row</button></div>
+</div>
+<div class="savebar" id="savebar" style="display:none"><div class="wrap">
+  <button class="btn" id="btn-save">Save changes</button>
+  <span id="status"></span>
+</div></div>
+<div class="wrap gate" id="gate">
+  <div class="card">
+    <h2>SiteKeeper</h2>
+    <p style="color:#667085;font-size:0.92rem;margin-bottom:0.8rem">Enter the site password to continue.</p>
+    <input id="gate-pw" type="password" placeholder="Password">
+    <div style="margin-top:0.8rem"><button class="btn" id="gate-go" style="width:100%">Continue</button></div>
+    <p class="hint" id="gate-err" style="color:#b42318;display:none">Wrong password.</p>
+  </div>
+</div>
+<script>
+// Polite gate — real security is the GitHub token, which lives only in the
+// owner's browser and is never stored in this repo. Change the password below.
+const SITE_PASSWORD = 'changeme';
+const LS = 'sitekeeper-v1';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/"/g, '&quot;');
+
+let sha = null, cfg = JSON.parse(localStorage.getItem(LS) || '{}');
+['s-owner','s-repo','s-path','s-token'].forEach(id => { if (cfg[id]) $(id).value = cfg[id]; });
+if (!cfg['s-path']) $('s-path').value = 'demo/content.json';
+
+$('gate-go').onclick = () => {
+  if ($('gate-pw').value === SITE_PASSWORD) {
+    $('gate').style.display = 'none'; $('app').style.display = 'block'; $('savebar').style.display = 'block';
+    load();
+  } else $('gate-err').style.display = 'block';
+};
+$('gate-pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('gate-go').click(); });
+
+function saveCfg() {
+  ['s-owner','s-repo','s-path','s-token'].forEach(id => cfg[id] = $(id).value.trim());
+  localStorage.setItem(LS, JSON.stringify(cfg));
+}
+$('btn-load').onclick = () => { saveCfg(); load(); };
+
+async function api(path, opts) {
+  const r = await fetch('https://api.github.com' + path, Object.assign({
+    headers: { 'Authorization': 'Bearer ' + cfg['s-token'], 'Accept': 'application/vnd.github+json' }
+  }, opts || {}));
+  if (!r.ok) throw new Error('GitHub: ' + r.status);
+  return r.json();
+}
+function status(msg, cls) { const s = $('status'); s.textContent = msg; s.className = cls || ''; }
+
+async function load() {
+  saveCfg();
+  if (!cfg['s-owner'] || !cfg['s-repo'] || !cfg['s-token']) { status('Fill in connection settings first.', 'err'); return; }
+  status('Loading…');
+  try {
+    const d = await api('/repos/' + cfg['s-owner'] + '/' + cfg['s-repo'] + '/contents/' + cfg['s-path']);
+    sha = d.sha;
+    const c = JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, '')))));
+    fill(c); status('Loaded. Make your edits, then save.', 'ok');
+  } catch (e) { status('Could not load — check settings and token.', 'err'); }
+}
+
+function row(html) { const d = document.createElement('div'); d.className = 'rep'; d.innerHTML = html + '<button class="rm" type="button">remove</button>'; d.querySelector('.rm').onclick = () => d.remove(); return d; }
+
+function fill(c) {
+  $('f-name').value = c.business.name || ''; $('f-tagline').value = c.business.tagline || '';
+  $('f-phone').value = c.business.phone || ''; $('f-address').value = c.business.address || '';
+  $('f-announcement').value = c.announcement || '';
+  $('specials').innerHTML = ''; (c.specials || []).forEach(s =>
+    $('specials').appendChild(row('<label>Title</label><input data-k="title" value="' + esc(s.title) + '"><label>Description</label><input data-k="desc" value="' + esc(s.desc) + '">')));
+  $('hours').innerHTML = ''; (c.hours || []).forEach(x =>
+    $('hours').appendChild(row('<div class="row"><div><label>Days</label><input data-k="days" value="' + esc(x.days) + '"></div><div><label>Time</label><input data-k="time" value="' + esc(x.time) + '"></div></div>')));
+  $('menusections').innerHTML = ''; (c.menu || []).forEach(sec => $('menusections').appendChild(sectionEl(sec)));
+}
+function sectionEl(sec) {
+  const d = row('<label>Section name</label><input data-k="section" value="' + esc(sec.section) + '"><div data-items style="margin-top:0.6rem"></div><button class="add" type="button" data-additem>+ Add item</button>');
+  const box = d.querySelector('[data-items]');
+  (sec.items || []).forEach(it => box.appendChild(itemEl(it)));
+  d.querySelector('[data-additem]').onclick = () => box.appendChild(itemEl({}));
+  return d;
+}
+function itemEl(it) {
+  return row('<label>Item name</label><input data-k="name" value="' + esc(it.name) + '"><label>Description</label><input data-k="desc" value="' + esc(it.desc) + '"><label>Price</label><input data-k="price" value="' + esc(it.price) + '">');
+}
+$('add-special').onclick = () => $('specials').appendChild(row('<label>Title</label><input data-k="title"><label>Description</label><input data-k="desc">'));
+$('add-hour').onclick = () => $('hours').appendChild(row('<div class="row"><div><label>Days</label><input data-k="days"></div><div><label>Time</label><input data-k="time"></div></div>'));
+$('add-section').onclick = () => $('menusections').appendChild(sectionEl({ items: [] }));
+
+function collect() {
+  const v = (el, k) => { const i = el.querySelector('[data-k="' + k + '"]'); return i ? i.value.trim() : ''; };
+  const reps = box => [...box.children].map(d => {
+    const o = {}; d.querySelectorAll('[data-k]').forEach(i => o[i.dataset.k] = i.value.trim()); return o;
+  });
+  return {
+    business: { name: $('f-name').value.trim(), tagline: $('f-tagline').value.trim(), phone: $('f-phone').value.trim(), address: $('f-address').value.trim() },
+    announcement: $('f-announcement').value.trim(),
+    specials: reps($('specials')).filter(s => s.title || s.desc),
+    menu: [...$('menusections').children].map(d => ({
+      section: v(d, 'section'),
+      items: [...d.querySelector('[data-items]').children].map(it => {
+        const o = {}; it.querySelectorAll('[data-k]').forEach(i => o[i.dataset.k] = i.value.trim()); return o;
+      }).filter(it => it.name)
+    })).filter(s => s.section),
+    hours: reps($('hours')).filter(x => x.days || x.time)
+  };
+}
+
+$('btn-save').onclick = async () => {
+  saveCfg(); status('Saving…'); $('btn-save').disabled = true;
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(collect(), null, 2))));
+    const d = await api('/repos/' + cfg['s-owner'] + '/' + cfg['s-repo'] + '/contents/' + cfg['s-path'], {
+      method: 'PUT', body: JSON.stringify({ message: 'SiteKeeper: owner content update', content, sha })
+    });
+    sha = d.content.sha;
+    status('Saved! The site updates in about 2 minutes.', 'ok');
+  } catch (e) { status('Save failed — check connection settings.', 'err'); }
+  $('btn-save').disabled = false;
+};
+</script>
+</body>
+</html>

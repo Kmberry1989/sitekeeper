@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Diner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #2b2118; background: #faf6ee; line-height: 1.6; }
+  .banner { background: #8c2f1b; color: #ffe9c2; text-align: center; padding: 0.7rem 1rem; font-weight: 600; display: none; }
+  header { text-align: center; padding: 3rem 1.2rem 2rem; }
+  header h1 { font-size: clamp(2rem, 6vw, 3rem); color: #8c2f1b; }
+  header .tag { font-style: italic; color: #6b4a2f; font-size: 1.1rem; }
+  .info { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; padding: 0 1.2rem 2rem; color: #6b4a2f; font-size: 0.95rem; }
+  .info a { color: #8c2f1b; font-weight: 700; }
+  main { max-width: 720px; margin: 0 auto; padding: 0 1.2rem 3rem; }
+  section { margin-bottom: 2.2rem; }
+  h2 { color: #8c2f1b; border-bottom: 2px solid #e0cfa8; padding-bottom: 0.3rem; margin-bottom: 1rem; }
+  .special { background: #fff; border-left: 4px solid #8c2f1b; border-radius: 0 8px 8px 0; padding: 0.8rem 1rem; margin-bottom: 0.8rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .special b { display: block; }
+  .special span { color: #6b4a2f; font-size: 0.95rem; }
+  .item { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px dotted #d8c39a; }
+  .item .n { font-weight: 700; }
+  .item .n small { display: block; font-weight: 400; color: #6b4a2f; font-size: 0.85rem; }
+  .item .p { font-weight: 700; color: #8c2f1b; white-space: nowrap; }
+  .hours { width: 100%; border-collapse: collapse; }
+  .hours td { padding: 0.45rem 0; border-bottom: 1px dotted #d8c39a; }
+  .hours td:last-child { text-align: right; font-weight: 600; }
+  footer { text-align: center; padding: 1.5rem; color: #98a2b3; font-size: 0.85rem; }
+  .loading { text-align: center; padding: 4rem 1rem; color: #98a2b3; }
+</style>
+</head>
+<body>
+<div class="banner" id="banner"></div>
+<header>
+  <h1 id="biz-name">…</h1>
+  <div class="tag" id="biz-tag"></div>
+</header>
+<div class="info">
+  <span id="biz-addr"></span>
+  <a id="biz-phone" href="#"></a>
+</div>
+<main id="content"><div class="loading">Loading…</div></main>
+<footer>Demo site — content managed with SiteKeeper.</footer>
+<script>
+fetch('content.json', { cache: 'no-store' })
+  .then(r => { if (!r.ok) throw 0; return r.json(); })
+  .then(c => {
+    document.title = c.business.name;
+    document.getElementById('biz-name').textContent = c.business.name;
+    document.getElementById('biz-tag').textContent = c.business.tagline || '';
+    document.getElementById('biz-addr').textContent = c.business.address || '';
+    const ph = document.getElementById('biz-phone');
+    ph.textContent = c.business.phone || '';
+    ph.href = 'tel:' + (c.business.phone || '').replace(/\D/g, '');
+    if (c.announcement) {
+      const b = document.getElementById('banner');
+      b.textContent = c.announcement;
+      b.style.display = 'block';
+    }
+    let h = '';
+    if (c.specials && c.specials.length) {
+      h += '<section><h2>Specials</h2>' + c.specials.map(s =>
+        '<div class="special"><b>' + esc(s.title) + '</b><span>' + esc(s.desc) + '</span></div>').join('') + '</section>';
+    }
+    (c.menu || []).forEach(sec => {
+      h += '<section><h2>' + esc(sec.section) + '</h2>' + (sec.items || []).map(it =>
+        '<div class="item"><div class="n">' + esc(it.name) +
+        (it.desc ? '<small>' + esc(it.desc) + '</small>' : '') +
+        '</div><div class="p">' + esc(it.price || '') + '</div></div>').join('') + '</section>';
+    });
+    if (c.hours && c.hours.length) {
+      h += '<section><h2>Hours</h2><table class="hours">' + c.hours.map(x =>
+        '<tr><td>' + esc(x.days) + '</td><td>' + esc(x.time) + '</td></tr>').join('') + '</table></section>';
+    }
+    document.getElementById('content').innerHTML = h;
+  })
+  .catch(() => { document.getElementById('content').innerHTML = '<div class="loading">Could not load content.</div>'; });
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+</script>
+</body>
+</html>
