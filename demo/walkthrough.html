@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteKeeper — how it works</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #2b2118; background: #faf6ee; line-height: 1.65; }
+  .top { background: #101828; color: #ffd75e; text-align: center; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.45rem 1rem; }
+  .top a { color: #fff; }
+  .hero { text-align: center; padding: 3.5rem 1.2rem 2.5rem; background: linear-gradient(180deg, #8c2f1b, #6e2415); color: #ffe9c2; }
+  .hero h1 { font-size: clamp(2rem, 7vw, 3.2rem); text-shadow: 0 2px 4px rgba(0,0,0,.4); }
+  .hero p { max-width: 620px; margin: 1rem auto 0; font-size: 1.08rem; color: #f5d9ae; }
+  .hero .cta { margin-top: 1.6rem; display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; background: #ffe9c2; color: #8c2f1b; font-weight: 700; padding: 0.8rem 1.6rem; border-radius: 10px; text-decoration: none; }
+  .btn.ghost { background: transparent; color: #ffe9c2; border: 2px solid #ffe9c2; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 1.2rem 4rem; }
+  .step { background: #fff; border: 1px solid #e8dcc3; border-radius: 16px; padding: 1.8rem; margin-top: 1.6rem; box-shadow: 0 2px 10px rgba(140,47,27,.06); }
+  .step .k { display: inline-block; background: #8c2f1b; color: #ffe9c2; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 0.25rem 0.8rem; margin-bottom: 0.7rem; }
+  .step h2 { color: #8c2f1b; font-size: 1.45rem; margin-bottom: 0.6rem; text-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .step p { color: #5b4a38; margin-bottom: 0.7rem; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+  .codebox { background: #101828; border-radius: 12px; padding: 1rem 1.2rem; overflow-x: auto; }
+  .codebox pre { color: #d6e4ff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; line-height: 1.55; white-space: pre-wrap; }
+  .codebox .lbl { color: #ffd75e; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .vs { display: flex; align-items: center; justify-content: center; font-weight: 800; color: #8c2f1b; }
+  /* sandbox */
+  .sandbox { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  @media (max-width: 640px) { .sandbox { grid-template-columns: 1fr; } }
+  .sandbox .panel { border: 1px solid #e8dcc3; border-radius: 12px; padding: 1.1rem; background: #faf6ee; }
+  .sandbox .panel h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8c2f1b; margin-bottom: 0.8rem; }
+  .sandbox label { display: block; font-size: 0.8rem; font-weight: 700; color: #5b4a38; margin: 0.6rem 0 0.25rem; }
+  .sandbox input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #d8c39a; border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: #fff; }
+  .preview-banner { background: #8c2f1b; color: #ffe9c2; text-align: center; padding: 0.6rem; font-weight: 600; border-radius: 8px; margin-bottom: 0.8rem; font-size: 0.9rem; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+  .preview-special { background: #fff; border-left: 4px solid #8c2f1b; border-radius: 0 8px 8px 0; padding: 0.7rem 0.9rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .preview-special b { display: block; color: #2b2118; }
+  .preview-special span { color: #6b4a2f; font-size: 0.88rem; }
+  .flash { animation: flash 0.6s; }
+  @keyframes flash { 0% { background: #fff3d6; } 100% { background: transparent; } }
+  .flow { display: flex; align-items: stretch; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .flow .f { flex: 1 1 140px; background: #faf6ee; border: 1px solid #e8dcc3; border-radius: 10px; padding: 0.9rem; text-align: center; font-size: 0.88rem; }
+  .flow .f b { display: block; color: #8c2f1b; margin-bottom: 0.25rem; }
+  .flow .arr { align-self: center; color: #8c2f1b; font-weight: 800; font-size: 1.2rem; }
+  .yesno { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  @media (max-width: 640px) { .yesno { grid-template-columns: 1fr; } }
+  .yesno ul { list-style: none; }
+  .yesno li { padding: 0.35rem 0; font-size: 0.95rem; color: #5b4a38; }
+  .yesno .yes li::before { content: "✓ "; color: #067647; font-weight: 800; }
+  .yesno .no li::before { content: "✕ "; color: #b42318; font-weight: 800; }
+  footer { text-align: center; padding: 2rem 1rem; color: #98a2b3; font-size: 0.85rem; }
+  footer a { color: #8c2f1b; }
+</style>
+</head>
+<body>
+<div class="top">SiteKeeper walkthrough — <a href="index.html">view the example site</a> · <a href="admin.html">open the editor</a></div>
+<div class="hero">
+  <h1>SiteKeeper</h1>
+  <p>Your words live in a simple file. The design lives in the site. You edit the words — you can never break the design.</p>
+  <div class="cta">
+    <a class="btn" href="#try">Try it live ↓</a>
+    <a class="btn ghost" href="index.html">See the example site</a>
+  </div>
+</div>
+<div class="wrap">
+
+  <div class="step">
+    <span class="k">Step 1</span>
+    <h2>The problem it solves</h2>
+    <p>Small-business owners need to change their hours, specials, and menu prices — without learning code, and without being able to accidentally destroy the site's layout. Calling the web person for every tweak is slow and expensive.</p>
+    <p>SiteKeeper splits the site in two: the <b>words</b> the owner edits, and the <b>design</b> only the web person touches.</p>
+  </div>
+
+  <div class="step">
+    <span class="k">Step 2</span>
+    <h2>Words here, design there</h2>
+    <p>The entire editable content of the example site lives in one plain file, <b>content.json</b> — fetched live below, exactly as the site reads it. The layout, colors, and fonts live in <b>index.html</b> and never appear in the file the owner touches.</p>
+    <div class="codebox">
+      <div class="lbl">content.json — live from the example site</div>
+      <pre id="live-json">Loading…</pre>
+    </div>
+  </div>
+
+  <div class="step" id="try">
+    <span class="k">Step 3</span>
+    <h2>Try it — edit the words, watch both sides</h2>
+    <p>Type in the fields. The <b>site preview</b> updates instantly — and so does the <b>JSON</b> underneath it. Same words, two views. Notice the layout never moves: that's the whole trick.</p>
+    <div class="sandbox">
+      <div class="panel">
+        <h3>✏️ What the owner types</h3>
+        <label>Announcement banner</label>
+        <input id="sb-announce" value="Daily specials on the board — ask your server what's cooking.">
+        <label>Special title</label>
+        <input id="sb-title" value="Tenderloin Deluxe Basket">
+        <label>Special description</label>
+        <input id="sb-desc" value="The famous breaded tenderloin, with fries.">
+      </div>
+      <div class="panel">
+        <h3>👀 What the site shows</h3>
+        <div class="preview-banner" id="pv-banner"></div>
+        <div class="preview-special"><b id="pv-title"></b><span id="pv-desc"></span></div>
+      </div>
+    </div>
+    <div class="codebox" style="margin-top:1rem">
+      <div class="lbl">The JSON behind it — updates as you type</div>
+      <pre id="sb-json"></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="k">Step 4</span>
+    <h2>The real editor</h2>
+    <p>The full editor (<b>admin.html</b>) is a private page with friendly form fields — business info, announcement, specials, menu sections and items, hours. It's behind a site password, and it talks straight to GitHub: no server, no monthly fee, nothing to maintain.</p>
+    <p><a class="btn" href="admin.html" style="background:#8c2f1b;color:#ffe9c2">Open the editor →</a></p>
+    <p style="font-size:0.85rem">Demo password: <code>changeme</code> — every real client gets their own.</p>
+  </div>
+
+  <div class="step">
+    <span class="k">Step 5</span>
+    <h2>What happens when you hit save</h2>
+    <div class="flow">
+      <div class="f"><b>1. Edit</b>Owner changes words in the editor</div><div class="arr">→</div>
+      <div class="f"><b>2. Commit</b>Editor saves content.json to GitHub via the API</div><div class="arr">→</div>
+      <div class="f"><b>3. Rebuild</b>GitHub Pages rebuilds the site (~2 min)</div><div class="arr">→</div>
+      <div class="f"><b>4. Live</b>Everyone sees the new hours, special, or price</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="k">Step 6</span>
+    <h2>What the owner can — and can't — touch</h2>
+    <div class="yesno">
+      <div class="yes"><ul>
+        <li>Business name, tagline, phone, address</li>
+        <li>Announcement banner</li>
+        <li>Specials, menu items, and prices</li>
+        <li>Hours</li>
+      </ul></div>
+      <div class="no"><ul>
+        <li>Layout and page structure</li>
+        <li>Colors, fonts, and styling</li>
+        <li>Anything that could break the design</li>
+      </ul></div>
+    </div>
+    <p style="margin-top:1rem">Security is proportionate: the editor password is a polite gate (changed per client). Real protection is the GitHub token — a fine-grained token scoped to one repo, living only in the owner's browser, revocable anytime.</p>
+  </div>
+
+</div>
+<footer>SiteKeeper — a Kyle Berry system. <a href="index.html">Example site</a> · <a href="admin.html">Editor</a></footer>
+<script>
+fetch('content.json', { cache: 'no-store' })
+  .then(r => r.json())
+  .then(c => {
+    document.getElementById('live-json').textContent = JSON.stringify(c, null, 2);
+  })
+  .catch(() => { document.getElementById('live-json').textContent = 'Could not load content.json.'; });
+
+// Sandbox: form -> preview + JSON, live
+const $ = id => document.getElementById(id);
+function renderSandbox(flash) {
+  const a = $('sb-announce').value, t = $('sb-title').value, d = $('sb-desc').value;
+  $('pv-banner').textContent = a;
+  $('pv-title').textContent = t;
+  $('pv-desc').textContent = d;
+  $('sb-json').textContent = JSON.stringify({
+    announcement: a,
+    specials: [{ title: t, desc: d }]
+  }, null, 2);
+  if (flash) {
+    ['pv-banner', 'pv-title', 'sb-json'].forEach(id => {
+      const n = $(id);
+      n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash');
+    });
+  }
+}
+['sb-announce', 'sb-title', 'sb-desc'].forEach(id => {
+  $(id).addEventListener('input', () => renderSandbox(true));
+});
+renderSandbox(false);
+</script>
+</body>
+</html>

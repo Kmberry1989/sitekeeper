@@ -25,7 +25,8 @@ The answer: the site's **words** live in a plain `content.json` file. The site's
 
 ## Demo
 
-- Live site: `demo/` renders from `demo/content.json`
+- Walkthrough: `demo/walkthrough.html` — guided tour with a live try-it sandbox
+- Live site: `demo/` renders from `demo/content.json` (example: Artie's Tenderloin, Kokomo — real public listing data)
 - Editor: `demo/admin.html` (password: `changeme`)
 
 ## Why build this instead of using Decap CMS?

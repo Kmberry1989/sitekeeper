@@ -3,19 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Demo Diner</title>
+<title>Artie's Tenderloin — SiteKeeper example</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #2b2118; background: #faf6ee; line-height: 1.6; }
-  .banner { background: #8c2f1b; color: #ffe9c2; text-align: center; padding: 0.7rem 1rem; font-weight: 600; display: none; }
-  header { text-align: center; padding: 3rem 1.2rem 2rem; }
-  header h1 { font-size: clamp(2rem, 6vw, 3rem); color: #8c2f1b; }
+  .demo-flag { background: #101828; color: #ffd75e; text-align: center; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.45rem 1rem; }
+  .demo-flag a { color: #fff; }
+  .banner { background: #8c2f1b; color: #ffe9c2; text-align: center; padding: 0.7rem 1rem; font-weight: 600; display: none; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+  header { text-align: center; padding: 3rem 1.2rem 1.2rem; }
+  header h1 { font-size: clamp(2rem, 6vw, 3rem); color: #8c2f1b; text-shadow: 0 1px 2px rgba(0,0,0,.18); }
   header .tag { font-style: italic; color: #6b4a2f; font-size: 1.1rem; }
   .info { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; padding: 0 1.2rem 2rem; color: #6b4a2f; font-size: 0.95rem; }
   .info a { color: #8c2f1b; font-weight: 700; }
   main { max-width: 720px; margin: 0 auto; padding: 0 1.2rem 3rem; }
   section { margin-bottom: 2.2rem; }
-  h2 { color: #8c2f1b; border-bottom: 2px solid #e0cfa8; padding-bottom: 0.3rem; margin-bottom: 1rem; }
+  h2 { color: #8c2f1b; border-bottom: 2px solid #e0cfa8; padding-bottom: 0.3rem; margin-bottom: 1rem; text-shadow: 0 1px 2px rgba(0,0,0,.15); }
   .special { background: #fff; border-left: 4px solid #8c2f1b; border-radius: 0 8px 8px 0; padding: 0.8rem 1rem; margin-bottom: 0.8rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
   .special b { display: block; }
   .special span { color: #6b4a2f; font-size: 0.95rem; }
@@ -27,10 +29,12 @@
   .hours td { padding: 0.45rem 0; border-bottom: 1px dotted #d8c39a; }
   .hours td:last-child { text-align: right; font-weight: 600; }
   footer { text-align: center; padding: 1.5rem; color: #98a2b3; font-size: 0.85rem; }
+  footer a { color: #8c2f1b; }
   .loading { text-align: center; padding: 4rem 1rem; color: #98a2b3; }
 </style>
 </head>
 <body>
+<div class="demo-flag">Example site — every word below comes from <a href="content.json">content.json</a>. <a href="walkthrough.html">See how it works →</a></div>
 <div class="banner" id="banner"></div>
 <header>
   <h1 id="biz-name">…</h1>
@@ -41,12 +45,18 @@
   <a id="biz-phone" href="#"></a>
 </div>
 <main id="content"><div class="loading">Loading…</div></main>
-<footer>Demo site — content managed with SiteKeeper.</footer>
+<footer>Example site — content managed with <a href="walkthrough.html">SiteKeeper</a>. <a href="admin.html">Open the editor</a></footer>
 <script>
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
 fetch('content.json', { cache: 'no-store' })
   .then(r => { if (!r.ok) throw 0; return r.json(); })
   .then(c => {
-    document.title = c.business.name;
+    document.title = c.business.name + ' — SiteKeeper example';
     document.getElementById('biz-name').textContent = c.business.name;
     document.getElementById('biz-tag').textContent = c.business.tagline || '';
     document.getElementById('biz-addr').textContent = c.business.address || '';
@@ -58,27 +68,49 @@ fetch('content.json', { cache: 'no-store' })
       b.textContent = c.announcement;
       b.style.display = 'block';
     }
-    let h = '';
-    if (c.specials && c.specials.length) {
-      h += '<section><h2>Specials</h2>' + c.specials.map(s =>
-        '<div class="special"><b>' + esc(s.title) + '</b><span>' + esc(s.desc) + '</span></div>').join('') + '</section>';
+    const main = document.getElementById('content');
+    main.innerHTML = '';
+    if ((c.specials || []).length) {
+      const s = el('section');
+      s.appendChild(el('h2', null, 'Specials'));
+      c.specials.forEach(sp => {
+        const d = el('div', 'special');
+        d.appendChild(el('b', null, sp.title));
+        if (sp.desc) d.appendChild(el('span', null, sp.desc));
+        s.appendChild(d);
+      });
+      main.appendChild(s);
     }
     (c.menu || []).forEach(sec => {
-      h += '<section><h2>' + esc(sec.section) + '</h2>' + (sec.items || []).map(it =>
-        '<div class="item"><div class="n">' + esc(it.name) +
-        (it.desc ? '<small>' + esc(it.desc) + '</small>' : '') +
-        '</div><div class="p">' + esc(it.price || '') + '</div></div>').join('') + '</section>';
+      const s = el('section');
+      s.appendChild(el('h2', null, sec.section));
+      (sec.items || []).forEach(it => {
+        const d = el('div', 'item');
+        const n = el('div', 'n', it.name);
+        if (it.desc) n.appendChild(el('small', null, it.desc));
+        d.appendChild(n);
+        if (it.price) d.appendChild(el('div', 'p', '$' + it.price));
+        s.appendChild(d);
+      });
+      main.appendChild(s);
     });
-    if (c.hours && c.hours.length) {
-      h += '<section><h2>Hours</h2><table class="hours">' + c.hours.map(x =>
-        '<tr><td>' + esc(x.days) + '</td><td>' + esc(x.time) + '</td></tr>').join('') + '</table></section>';
+    if ((c.hours || []).length) {
+      const s = el('section');
+      s.appendChild(el('h2', null, 'Hours'));
+      const t = el('table', 'hours');
+      c.hours.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.appendChild(el('td', null, row.days));
+        tr.appendChild(el('td', null, row.time));
+        t.appendChild(tr);
+      });
+      s.appendChild(t);
+      main.appendChild(s);
     }
-    document.getElementById('content').innerHTML = h;
   })
-  .catch(() => { document.getElementById('content').innerHTML = '<div class="loading">Could not load content.</div>'; });
-function esc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+  .catch(() => {
+    document.getElementById('content').innerHTML = '<div class="loading">Could not load content.json.</div>';
+  });
 </script>
 </body>
 </html>
